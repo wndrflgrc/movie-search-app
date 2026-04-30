@@ -22,6 +22,33 @@ export interface MovieDetails extends Movie {
   status: string;
   budget: number;
   revenue: number;
+  homepage: string | null;
+  imdb_id: string | null;
+  original_language: string;
+  original_title: string;
+  origin_country: string[];
+  adult: boolean;
+  belongs_to_collection: {
+    id: number;
+    name: string;
+    poster_path: string | null;
+    backdrop_path: string | null;
+  } | null;
+  production_companies: Array<{
+    id: number;
+    name: string;
+    logo_path: string | null;
+    origin_country: string;
+  }>;
+  production_countries: Array<{
+    iso_3166_1: string;
+    name: string;
+  }>;
+  spoken_languages: Array<{
+    english_name: string;
+    iso_639_1: string;
+    name: string;
+  }>;
 }
 
 export interface SearchResponse {
@@ -31,15 +58,22 @@ export interface SearchResponse {
   total_results: number;
 }
 
+function getApiKey(): string {
+  const apiKey =
+    process.env.TMDB_API_KEY ?? process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'TMDB API key is not configured. Set TMDB_API_KEY in your environment (e.g. .env.local).',
+    );
+  }
+  return apiKey;
+}
+
 export async function searchMovies(
   query: string,
   page = 1,
 ): Promise<SearchResponse> {
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('TMDB API key is not configured');
-  }
+  const apiKey = getApiKey();
 
   const url = `${TMDB_BASE_URL}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}&page=${page}`;
 
@@ -55,11 +89,7 @@ export async function searchMovies(
 export async function getTrendingMovies(
   timeWindow: 'day' | 'week' = 'week',
 ): Promise<SearchResponse> {
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('TMDB API key is not configured');
-  }
+  const apiKey = getApiKey();
 
   const url = `${TMDB_BASE_URL}/trending/movie/${timeWindow}?api_key=${apiKey}`;
 
@@ -73,11 +103,7 @@ export async function getTrendingMovies(
 }
 
 export async function getMovieDetails(movieId: number): Promise<MovieDetails> {
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('TMDB API key is not configured');
-  }
+  const apiKey = getApiKey();
 
   const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${apiKey}`;
 

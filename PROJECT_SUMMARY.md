@@ -13,7 +13,7 @@
 ### Authentication System
 
 - ✅ Login page at `/login`
-- ✅ Hardcoded credentials:
+- ✅ Hardcoded credentials:w
   - Username: `user001`
   - Password: `DWpass123456`
 - ✅ API route: `/api/auth/login`

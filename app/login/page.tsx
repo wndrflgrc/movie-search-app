@@ -1,121 +1,121 @@
-'use client';
+import Link from 'next/link';
+import { Film, Sparkles } from 'lucide-react';
+import { getTrendingMovies, type Movie } from '@/lib/tmdb';
+import { LoginForm } from './login-form';
+import { PosterWall } from './poster-wall';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Film } from 'lucide-react';
-import { motion } from 'motion/react';
+export const revalidate = 3600;
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+async function fetchPosters() {
+  try {
+    const data = await getTrendingMovies('week');
+    return data.results
+      .filter((m: Movie) => Boolean(m.poster_path))
+      .slice(0, 18)
+      .map((m: Movie) => ({
+        id: m.id,
+        path: m.poster_path as string,
+        title: m.title,
+      }));
+  } catch {
+    return [];
+  }
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem('authenticated', 'true');
-        router.push('/search');
-      } else {
-        setError('Invalid username or password');
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+export default async function LoginPage() {
+  const posters = await fetchPosters();
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4'>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className='w-full max-w-md'>
-          <CardHeader className='space-y-1 text-center'>
-            <div className='flex justify-center mb-4'>
-              <div className='p-3 rounded-full bg-primary/10'>
-                <Film className='h-8 w-8 text-primary' />
-              </div>
+    <div className='relative flex min-h-screen w-full overflow-hidden bg-neutral-950 text-white'>
+      {/* Left: poster wall hero (hidden on small screens) */}
+      <aside className='relative hidden w-1/2 overflow-hidden lg:block xl:w-[58%]'>
+        <PosterWall posters={posters} />
+        {/* Gradient overlays for legibility */}
+        <div className='absolute inset-0 bg-linear-to-tr from-neutral-950 via-neutral-950/70 to-transparent' />
+        <div className='absolute inset-0 bg-linear-to-r from-neutral-950/40 via-transparent to-neutral-950/80' />
+
+        {/* Branding overlay */}
+        <div className='relative z-10 flex h-full flex-col justify-between p-10 xl:p-14'>
+          <Link
+            href='/'
+            className='inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-white/90'
+          >
+            <span className='flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 backdrop-blur'>
+              <Film className='h-5 w-5' />
+            </span>
+            CineSearch
+          </Link>
+
+          <div className='max-w-lg space-y-4'>
+            <span className='inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur'>
+              <Sparkles className='h-3.5 w-3.5' />
+              Powered by TMDB
+            </span>
+            <h2 className='text-3xl font-semibold leading-tight tracking-tight xl:text-5xl'>
+              Discover your next favorite film.
+            </h2>
+            <p className='text-sm text-white/70 xl:text-base'>
+              Browse trending titles, search a database of millions of movies,
+              and dive into the details — all from one beautifully simple app.
+            </p>
+          </div>
+
+          <p className='text-xs text-white/50'>
+            © {new Date().getFullYear()} CineSearch. Movie data from{' '}
+            <a
+              href='https://www.themoviedb.org/'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='underline-offset-2 hover:underline'
+            >
+              The Movie Database
+            </a>
+            .
+          </p>
+        </div>
+      </aside>
+
+      {/* Right: login form panel */}
+      <main className='relative flex w-full flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:bg-background lg:text-foreground'>
+        {/* Mobile background: subtle poster wall + heavy overlay */}
+        <div className='absolute inset-0 lg:hidden'>
+          <PosterWall posters={posters} />
+          <div className='absolute inset-0 bg-linear-to-b from-neutral-950/85 via-neutral-950/95 to-neutral-950' />
+        </div>
+
+        <div className='relative z-10 w-full max-w-md'>
+          {/* Mobile-only brand header */}
+          <div className='mb-8 flex flex-col items-center text-center lg:hidden'>
+            <span className='mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 backdrop-blur'>
+              <Film className='h-6 w-6 text-white' />
+            </span>
+            <h1 className='text-2xl font-semibold tracking-tight text-white'>
+              CineSearch
+            </h1>
+            <p className='mt-1 text-sm text-white/70'>
+              Sign in to discover trending movies
+            </p>
+          </div>
+
+          <div className='rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl sm:p-8 lg:border-border lg:bg-card lg:text-card-foreground lg:shadow-sm lg:backdrop-blur-none'>
+            {/* Desktop form heading */}
+            <div className='mb-6 hidden lg:block'>
+              <h1 className='text-2xl font-semibold tracking-tight'>
+                Welcome back
+              </h1>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Sign in to your account to continue.
+              </p>
             </div>
-            <CardTitle className='text-2xl font-bold'>Movie Search</CardTitle>
-            <CardDescription>
-              Sign in to search and discover movies
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className='space-y-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='username'>Username</Label>
-                <Input
-                  id='username'
-                  type='text'
-                  placeholder='Enter username'
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='password'>Password</Label>
-                <Input
-                  id='password'
-                  type='password'
-                  placeholder='Enter password'
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className='text-sm text-destructive'
-                >
-                  {error}
-                </motion.p>
-              )}
-              <Button type='submit' className='w-full' disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-              <div className='text-xs text-center text-muted-foreground mt-4'>
-                <p>Demo credentials:</p>
-                <p className='font-mono'>user001 / DWpass123456</p>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
+
+            <LoginForm />
+          </div>
+
+          <p className='mt-6 text-center text-xs text-white/60 lg:text-muted-foreground'>
+            Protected demo · Use the credentials above to sign in.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
